@@ -13,8 +13,8 @@ LT_BLUE = (173, 216, 230)
 class Satellite(pg.sprite.Sprite):
     """Satellite object that rotates to face planet & crashes & burns."""
     
-    def __init__(self, background, planet):
-        super(Satellite, self).__init__()
+    def __init__(self, background):
+        super().__init__()
         self.background = background
         self.image_sat = pg.image.load("satellite.png").convert()
         self.image_crash = pg.image.load("satellite_crash_40x33.png").convert()
@@ -90,7 +90,7 @@ class Planet(pg.sprite.Sprite):
     """Planet object that rotates & projects gravity field."""
     
     def __init__(self):
-        super(Planet, self).__init__()
+        super().__init__()
         self.image_mars = pg.image.load("mars.png").convert()
         self.image_water = pg.image.load("mars_water.png").convert() 
         self.image_copy = pg.transform.scale(self.image_mars, (100, 100)) 
@@ -112,19 +112,19 @@ class Planet(pg.sprite.Sprite):
         self.rect.center = last_center
         self.angle += self.rotate_by
 
-    def gravity(self, obj):
-        """Calculate impact of gravity on an object."""
-        G = 1  # gravitational constant for game
-        dist_x = self.x - obj.x
-        dist_y = self.y - obj.y
+    def gravity(self, satellite):
+        """Calculate impact of gravity on the satellite."""
+        G = 1.0  # gravitational constant for game
+        dist_x = self.x - satellite.x
+        dist_y = self.y - satellite.y
         distance = math.hypot(dist_x, dist_y)     
         # normalize to a unit vector
         dist_x /= distance
         dist_y /= distance
         # apply gravity
-        force = G * (obj.mass * self.mass)/(math.pow(distance, 2))
-        obj.dx += (dist_x * force)
-        obj.dy += (dist_y * force)
+        force = G * (satellite.mass * self.mass)/(math.pow(distance, 2))
+        satellite.dx += (dist_x * force)
+        satellite.dy += (dist_y * force)
         
     def update(self):
         """Call the rotate method."""
@@ -134,13 +134,13 @@ def calc_eccentricity(dist_list):
     """Calculate & return eccentricity from list of radii."""
     apoapsis = max(dist_list)
     periapsis = min(dist_list)
-    eccentricity = round((apoapsis - periapsis) / (apoapsis + periapsis), 8)
+    eccentricity = (apoapsis - periapsis) / (apoapsis + periapsis)
     return eccentricity
 
 def instruct_label(screen, text, color, x, y):
     """Take screen, list of strings, color, & origin & render to screen."""
-    instruct_font = pg.font.SysFont('Consolas', 17)
-    line_spacing = 20
+    instruct_font = pg.font.SysFont(None, 25)
+    line_spacing = 22
     for index, line in enumerate(text):
         label = instruct_font.render(line, True, color, BLACK)
         screen.blit(label, (x, y + index * line_spacing))
@@ -210,7 +210,7 @@ def main():
     # instantiate planet and satellite objects
     planet = Planet()
     planet_sprite = pg.sprite.Group(planet)
-    sat = Satellite(background, planet)    
+    sat = Satellite(background)    
     sat_sprite = pg.sprite.Group(sat)
 
     # for circular orbit verification
@@ -270,7 +270,7 @@ def main():
             sat.dy = 0
 
         # enable mapping functionality
-        if eccentricity < 0.05 and sat.distance > 69 and sat.distance < 121:
+        if eccentricity < 0.05 and sat.distance >= 69 and sat.distance <= 120:
             map_instruct = ['Press & hold M to map soil moisture']
             instruct_label(screen, map_instruct, LT_BLUE, 250, 175)
             mapping_enabled = True
@@ -284,7 +284,7 @@ def main():
 
         # display intro text for 15 seconds      
         if pg.time.get_ticks() <= 15000:  # time in milliseconds
-            instruct_label(screen, intro_text, GREEN, 125, 100)
+            instruct_label(screen, intro_text, GREEN, 145, 100)
 
         # display telemetry and instructions
         box_label(screen, 'Dx', (70, 20, 75, 20))
@@ -297,10 +297,10 @@ def main():
         box_label(screen, '{:.1f}'.format(sat.dy), (150, 50, 80, 20))
         box_label(screen, '{:.1f}'.format(sat.distance), (240, 50, 160, 20))
         box_label(screen, '{}'.format(sat.fuel), (410, 50, 160, 20))
-        box_label(screen, '{}'.format(eccentricity), (580, 50, 150, 20))
+        box_label(screen, '{:.8f}'.format(eccentricity), (580, 50, 150, 20))
           
-        instruct_label(screen, instruct_text1, WHITE, 10, 580)
-        instruct_label(screen, instruct_text2, WHITE, 560, 520)
+        instruct_label(screen, instruct_text1, WHITE, 10, 575)
+        instruct_label(screen, instruct_text2, WHITE, 570, 510)
       
         # add terminator & border
         cast_shadow(screen)
